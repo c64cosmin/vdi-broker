@@ -88,6 +88,15 @@ class PoolManager(object):
                 userdata=userdata,
                 nics=[{'net-id': network_id}])
 
+            retries = 0
+            while retries < 100:
+                LOG.debug('Instance not yet active. Retrying in 3 seconds')
+                time.sleep(3)
+                retries+=1
+                instance = nova.servers.get(instance.id)
+                if instance.status == 'ACTIVE':
+                    break
+
             floating_ip = nova.floating_ips.create(pool=fip_pool_name)
             instance.add_security_group(sec_group_id)
 
@@ -104,9 +113,20 @@ class PoolManager(object):
             try:
                 self._wait_for_instance(nova, instance.id, 'ACTIVE')
                 instance.add_floating_ip(floating_ip)
+                #import pdb;pdb.set_trace()
+                vm_username = "Admin"
+                vm_password = ''
+                while vm_password is '':
+                    try:
+                        vm_password = instance.get_password(private_key="/etc/vdibroker/key").decode()
+                    except AttributeError:
+                        LOG.debug('No password yet')
+                        time.sleep(1)
+                LOG.debug('Got a password')
+                LOG.debug(vm_password)
                 # utils.wait_for_port_connectivity(
                 #    floating_ip.ip, constants.RDP_PORT)
-                instances_data.append((instance.id, floating_ip.ip))
+                instances_data.append((instance.id, floating_ip.ip, vm_username, vm_password))
             except Exception as ex:
                 LOG.exception(ex)
                 nova.servers.delete(instance)

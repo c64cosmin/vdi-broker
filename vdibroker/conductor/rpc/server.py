@@ -99,13 +99,14 @@ class ConductorServerEndpoint(object):
         if not application.instances_data:
             raise exception.ApplicationInstanceUnavailable()
 
-        instance_id, floating_ip = application.instances_data.pop(0)
+        instance_id, floating_ip, vm_username, vm_password = application.instances_data.pop(0)
 
         remote_session = models.RemoteSession()
         remote_session.application_id = application_id
         remote_session.instance_id = instance_id
         remote_session.connection_data = {
-            "host": floating_ip, "port": constants.RDP_PORT}
+            "host": floating_ip, "port": constants.RDP_PORT,
+            "username": vm_username, "password": vm_password}
 
         db_api.add_remote_session(ctxt, remote_session)
         LOG.info("Remote session created: %s", remote_session.id)
