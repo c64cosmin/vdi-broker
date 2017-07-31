@@ -22,7 +22,14 @@ from vdibroker.db.sqlalchemy import migration
 from vdibroker import exception
 from vdibroker.i18n import _
 
+db_opts = [
+    cfg.StrOpt('database.connection',
+               default='mysql://vdibroker:Passw0rd@127.0.0.1/vdibroker',
+               help='Mysql URI'),
+]
+
 CONF = cfg.CONF
+CONF.register_opts(db_opts)
 db_options.set_defaults(CONF)
 
 _facade = None
@@ -35,7 +42,7 @@ def get_facade():
         # _facade = db_session.EngineFacade(CONF.database.connection)
         # _facade = db_session.EngineFacade.from_config(CONF)
         _facade = db_session.EngineFacade(
-            "mysql://vdibroker:Passw0rd@localhost/vdibroker")
+            CONF.database.connection)
     return _facade
 
 
